@@ -32,7 +32,7 @@ export default function App() {
           <Route
             path="sales"
             element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'SALES', 'SALES_ASSISTANT']}>
+              <ProtectedRoute allowedRoles={['ADMIN', 'SALES']}>
                 <PlaceholderPage title="Sales" part={7} todo={['Point-of-sale screen', 'Calls sp_create_sale']} />
               </ProtectedRoute>
             }
@@ -40,7 +40,7 @@ export default function App() {
           <Route
             path="customers"
             element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'SALES', 'SALES_ASSISTANT']}>
+              <ProtectedRoute allowedRoles={['ADMIN', 'SALES']}>
                 <PlaceholderPage title="Customers" part={6} todo={['Customer list and search', 'Profile with purchase history']} />
               </ProtectedRoute>
             }
@@ -48,7 +48,7 @@ export default function App() {
           <Route
             path="invoices"
             element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'SALES', 'SALES_ASSISTANT']}>
+              <ProtectedRoute allowedRoles={['ADMIN', 'SALES']}>
                 <PlaceholderPage title="Invoices & Documents" part={8} todo={['Invoice view and PDF download', 'Document search']} />
               </ProtectedRoute>
             }
@@ -58,7 +58,7 @@ export default function App() {
           <Route
             path="products"
             element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'STOCK', 'STOCK_MANAGER']}>
+              <ProtectedRoute allowedRoles={['ADMIN', 'STOCK']}>
                 <PlaceholderPage title="Products" part={3} todo={['Product list, search, add/edit']} />
               </ProtectedRoute>
             }
@@ -66,7 +66,7 @@ export default function App() {
           <Route
             path="inventory"
             element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'STOCK', 'STOCK_MANAGER']}>
+              <ProtectedRoute allowedRoles={['ADMIN', 'STOCK']}>
                 <PlaceholderPage title="Inventory" part={4} todo={['Stock overview', 'Low-stock alerts', 'Movement history']} />
               </ProtectedRoute>
             }
@@ -74,7 +74,7 @@ export default function App() {
           <Route
             path="purchases"
             element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'STOCK', 'STOCK_MANAGER']}>
+              <ProtectedRoute allowedRoles={['ADMIN', 'STOCK']}>
                 <PlaceholderPage title="Suppliers & Purchases" part={5} todo={['Supplier pages', 'Purchase entry form']} />
               </ProtectedRoute>
             }

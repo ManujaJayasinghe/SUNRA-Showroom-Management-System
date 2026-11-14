@@ -14,14 +14,7 @@ export default function AppLayout() {
   // Role-based sidebar menu filtering
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (!item.roles || item.roles.length === 0) return true
-    return item.roles.some((r) => {
-      if (r === role) return true
-      if (r === 'SALES' && (role === 'SALES_ASSISTANT' || role === 'SALES')) return true
-      if (r === 'SALES_ASSISTANT' && (role === 'SALES' || role === 'SALES_ASSISTANT')) return true
-      if (r === 'STOCK' && (role === 'STOCK_MANAGER' || role === 'STOCK')) return true
-      if (r === 'STOCK_MANAGER' && (role === 'STOCK' || role === 'STOCK_MANAGER')) return true
-      return false
-    })
+    return item.roles.includes(role)
   })
 
   return (
