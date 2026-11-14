@@ -1,0 +1,21 @@
+# Java
+backend/target/
+*.class
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Local secrets and generated documents
+.env
+frontend/.env.local
+backend/storage/
+
+# Backups (Part 10 keeps scripts in git, not dump files)
+database/backups/

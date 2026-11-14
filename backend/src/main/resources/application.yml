@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: sunra-showroom
+
+  datasource:
+    # Override with env vars DB_URL / DB_USERNAME / DB_PASSWORD if your setup differs
+    url: ${DB_URL:jdbc:mysql://localhost:3306/sunra_db?serverTimezone=Asia/Colombo&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:sunra_app}
+    password: ${DB_PASSWORD:sunra_pass}
+
+  jpa:
+    hibernate:
+      # Flyway owns the schema. Hibernate only checks entities match it.
+      # NEVER change this to update/create.
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # Each part has its own version range (V2_x, V3_x ...), so files can
+    # arrive out of order during development
+    out-of-order: true
+    validate-on-migrate: true
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173
+
+logging:
+  level:
+    org.flywaydb: INFO
