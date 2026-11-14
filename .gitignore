@@ -19,3 +19,6 @@ backend/storage/
 
 # Backups (Part 10 keeps scripts in git, not dump files)
 database/backups/
+
+# MySQL Workbench backups
+*.mwb.bak
