@@ -6,8 +6,9 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Part 2 stores the JWT under this key after login
+// Part 2 stores the JWT and user under these keys after login
 export const TOKEN_KEY = 'sunra_token'
+export const USER_KEY = 'sunra_user'
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY)
@@ -15,12 +16,21 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Turns backend ApiError bodies into one readable message
+// Turns backend ApiError bodies into one readable message; redirects on 401
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     const data = err.response?.data
     err.userMessage = data?.message || err.message || 'Request failed'
+
+    if (err.response?.status === 401) {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login'
+      }
+    }
+
     return Promise.reject(err)
   },
 )
