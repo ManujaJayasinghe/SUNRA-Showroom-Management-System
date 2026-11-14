@@ -33,6 +33,15 @@ CREATE USER IF NOT EXISTS 'app_stock'@'localhost' IDENTIFIED BY 'CHANGE_ME_stock
 GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON sunra_db.* TO 'app_admin'@'localhost';
 
 -- ---------------------------------------------------------------------
+-- 2b. Part 2 Security Objects Explicit Grants (app_admin)
+-- ---------------------------------------------------------------------
+-- Explicit grants for Part 2 view and login procedures (covered also by
+-- sunra_db.* above, highlighted here for audit and documentation):
+GRANT SELECT ON sunra_db.v_user_public TO 'app_admin'@'localhost';
+GRANT EXECUTE ON PROCEDURE sunra_db.sp_get_login_user TO 'app_admin'@'localhost';
+GRANT EXECUTE ON PROCEDURE sunra_db.sp_record_login TO 'app_admin'@'localhost';
+
+-- ---------------------------------------------------------------------
 -- 3. Sales Staff Account (app_sales)
 -- ---------------------------------------------------------------------
 -- RATIONALE & PRIVILEGE DECISION:
@@ -127,3 +136,4 @@ FLUSH PRIVILEGES;
 SHOW GRANTS FOR 'app_admin'@'localhost';
 SHOW GRANTS FOR 'app_sales'@'localhost';
 SHOW GRANTS FOR 'app_stock'@'localhost';
+
