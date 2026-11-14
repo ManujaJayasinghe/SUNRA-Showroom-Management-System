@@ -8,14 +8,30 @@
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
--- 1. User Creation with Placeholders
+-- 0. Cleanup Legacy Accounts
 -- ---------------------------------------------------------------------
--- In production/demo, replace 'CHANGE_ME_*' with secure generated secrets.
--- These accounts connect from the local application backend tier.
+-- Remove legacy @'localhost' accounts so that all client connections
+-- (including Docker host gateway, Workbench, and backend services)
+-- consistently resolve to the @'%' account definitions.
+DROP USER IF EXISTS 'app_admin'@'localhost';
+DROP USER IF EXISTS 'app_sales'@'localhost';
+DROP USER IF EXISTS 'app_stock'@'localhost';
 
-CREATE USER IF NOT EXISTS 'app_admin'@'localhost' IDENTIFIED BY 'CHANGE_ME_admin';
-CREATE USER IF NOT EXISTS 'app_sales'@'localhost' IDENTIFIED BY 'CHANGE_ME_sales';
-CREATE USER IF NOT EXISTS 'app_stock'@'localhost' IDENTIFIED BY 'CHANGE_ME_stock';
+-- ---------------------------------------------------------------------
+-- 1. User Creation with Placeholders (@'%')
+-- ---------------------------------------------------------------------
+-- SECURITY NOTE:
+-- Using @'%' allows client connections from any host (such as MySQL Workbench
+-- running on the host machine connecting via 127.0.0.1 / mapped container port).
+-- This configuration is intended for DEMO and DEVELOPMENT environments only.
+-- In a production environment, the host wildcard '%' must be restricted to
+-- specific backend application server subnets or fixed IPs (e.g. 'app_admin'@'10.0.1.%').
+--
+-- In production/demo, replace 'CHANGE_ME_*' with secure generated secrets.
+
+CREATE USER IF NOT EXISTS 'app_admin'@'%' IDENTIFIED BY 'CHANGE_ME_admin';
+CREATE USER IF NOT EXISTS 'app_sales'@'%' IDENTIFIED BY 'CHANGE_ME_sales';
+CREATE USER IF NOT EXISTS 'app_stock'@'%' IDENTIFIED BY 'CHANGE_ME_stock';
 
 -- ---------------------------------------------------------------------
 -- 2. Administrator Account (app_admin)
@@ -30,16 +46,16 @@ CREATE USER IF NOT EXISTS 'app_stock'@'localhost' IDENTIFIED BY 'CHANGE_ME_stock
 -- 5. WITHHELD: Administrative privileges (GRANT OPTION, SUPER, RELOAD, SHUTDOWN)
 --    are withheld to prevent privilege escalation or rogue user creation.
 
-GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON sunra_db.* TO 'app_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON sunra_db.* TO 'app_admin'@'%';
 
 -- ---------------------------------------------------------------------
 -- 2b. Part 2 Security Objects Explicit Grants (app_admin)
 -- ---------------------------------------------------------------------
 -- Explicit grants for Part 2 view and login procedures (covered also by
 -- sunra_db.* above, highlighted here for audit and documentation):
-GRANT SELECT ON sunra_db.v_user_public TO 'app_admin'@'localhost';
-GRANT EXECUTE ON PROCEDURE sunra_db.sp_get_login_user TO 'app_admin'@'localhost';
-GRANT EXECUTE ON PROCEDURE sunra_db.sp_record_login TO 'app_admin'@'localhost';
+GRANT SELECT ON sunra_db.v_user_public TO 'app_admin'@'%';
+GRANT EXECUTE ON PROCEDURE sunra_db.sp_get_login_user TO 'app_admin'@'%';
+GRANT EXECUTE ON PROCEDURE sunra_db.sp_record_login TO 'app_admin'@'%';
 
 -- ---------------------------------------------------------------------
 -- 3. Sales Staff Account (app_sales)
@@ -64,14 +80,14 @@ GRANT EXECUTE ON PROCEDURE sunra_db.sp_record_login TO 'app_admin'@'localhost';
 --    - NO ACCESS to audit_log: Audit integrity cannot be viewed or manipulated by sales.
 --    - NO ACCESS to app_user, role: Prevents credential snooping or account tampering.
 
-GRANT SELECT, INSERT, UPDATE ON sunra_db.customer   TO 'app_sales'@'localhost';
-GRANT SELECT, INSERT, UPDATE ON sunra_db.sale       TO 'app_sales'@'localhost';
-GRANT SELECT, INSERT, UPDATE ON sunra_db.sale_item  TO 'app_sales'@'localhost';
-GRANT SELECT, INSERT, UPDATE ON sunra_db.payment    TO 'app_sales'@'localhost';
-GRANT SELECT, INSERT, UPDATE ON sunra_db.invoice    TO 'app_sales'@'localhost';
-GRANT SELECT, INSERT, UPDATE ON sunra_db.document   TO 'app_sales'@'localhost';
-GRANT SELECT                 ON sunra_db.product    TO 'app_sales'@'localhost';
-GRANT SELECT                 ON sunra_db.inventory  TO 'app_sales'@'localhost';
+GRANT SELECT, INSERT, UPDATE ON sunra_db.customer   TO 'app_sales'@'%';
+GRANT SELECT, INSERT, UPDATE ON sunra_db.sale       TO 'app_sales'@'%';
+GRANT SELECT, INSERT, UPDATE ON sunra_db.sale_item  TO 'app_sales'@'%';
+GRANT SELECT, INSERT, UPDATE ON sunra_db.payment    TO 'app_sales'@'%';
+GRANT SELECT, INSERT, UPDATE ON sunra_db.invoice    TO 'app_sales'@'%';
+GRANT SELECT, INSERT, UPDATE ON sunra_db.document   TO 'app_sales'@'%';
+GRANT SELECT                 ON sunra_db.product    TO 'app_sales'@'%';
+GRANT SELECT                 ON sunra_db.inventory  TO 'app_sales'@'%';
 
 -- ---------------------------------------------------------------------
 -- 4. Stock Manager Account (app_stock)
@@ -95,13 +111,13 @@ GRANT SELECT                 ON sunra_db.inventory  TO 'app_sales'@'localhost';
 --      records are segregated from back-office inventory procurement.
 --    - NO ACCESS to audit_log: Protected from unauthorized inspection or tampering.
 
-GRANT SELECT, INSERT, UPDATE ON sunra_db.product          TO 'app_stock'@'localhost';
-GRANT SELECT, INSERT, UPDATE ON sunra_db.product_category TO 'app_stock'@'localhost';
-GRANT SELECT, INSERT, UPDATE ON sunra_db.supplier         TO 'app_stock'@'localhost';
-GRANT SELECT, INSERT, UPDATE ON sunra_db.purchase         TO 'app_stock'@'localhost';
-GRANT SELECT, INSERT, UPDATE ON sunra_db.purchase_item    TO 'app_stock'@'localhost';
-GRANT SELECT                 ON sunra_db.inventory        TO 'app_stock'@'localhost';
-GRANT SELECT                 ON sunra_db.stock_movement   TO 'app_stock'@'localhost';
+GRANT SELECT, INSERT, UPDATE ON sunra_db.product          TO 'app_stock'@'%';
+GRANT SELECT, INSERT, UPDATE ON sunra_db.product_category TO 'app_stock'@'%';
+GRANT SELECT, INSERT, UPDATE ON sunra_db.supplier         TO 'app_stock'@'%';
+GRANT SELECT, INSERT, UPDATE ON sunra_db.purchase         TO 'app_stock'@'%';
+GRANT SELECT, INSERT, UPDATE ON sunra_db.purchase_item    TO 'app_stock'@'%';
+GRANT SELECT                 ON sunra_db.inventory        TO 'app_stock'@'%';
+GRANT SELECT                 ON sunra_db.stock_movement   TO 'app_stock'@'%';
 
 -- ---------------------------------------------------------------------
 -- 5. Stored Procedure Grants: Run again after Parts 4-8 are merged
@@ -119,21 +135,20 @@ GRANT SELECT                 ON sunra_db.stock_movement   TO 'app_stock'@'localh
 -- ---------------------------------------------------------------------
 
 -- UNCOMMENT AND EXECUTE AFTER PARTS 4, 6, 7, 8 ARE MERGED:
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_create_sale        TO 'app_sales'@'localhost';
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_generate_invoice   TO 'app_sales'@'localhost';
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_search_customer    TO 'app_sales'@'localhost';
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_adjust_stock       TO 'app_sales'@'localhost';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_create_sale        TO 'app_sales'@'%';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_generate_invoice   TO 'app_sales'@'%';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_search_customer    TO 'app_sales'@'%';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_adjust_stock       TO 'app_sales'@'%';
 
 -- UNCOMMENT AND EXECUTE AFTER PARTS 4, 5 ARE MERGED:
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_adjust_stock       TO 'app_stock'@'localhost';
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_receive_purchase   TO 'app_stock'@'localhost';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_adjust_stock       TO 'app_stock'@'%';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_receive_purchase   TO 'app_stock'@'%';
 
 -- ---------------------------------------------------------------------
 -- 6. Apply & Verify Privileges
 -- ---------------------------------------------------------------------
 FLUSH PRIVILEGES;
 
-SHOW GRANTS FOR 'app_admin'@'localhost';
-SHOW GRANTS FOR 'app_sales'@'localhost';
-SHOW GRANTS FOR 'app_stock'@'localhost';
-
+SHOW GRANTS FOR 'app_admin'@'%';
+SHOW GRANTS FOR 'app_sales'@'%';
+SHOW GRANTS FOR 'app_stock'@'%';
