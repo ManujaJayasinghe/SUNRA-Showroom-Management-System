@@ -139,13 +139,6 @@ export default function LoginPage() {
             {submitting ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #eef1f5', fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>
-          <div>Demo accounts:</div>
-          <div style={{ marginTop: 4, fontFamily: 'monospace' }}>
-            admin &bull; sales1 &bull; stock1
-          </div>
-        </div>
       </div>
     </div>
   )
