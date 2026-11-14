@@ -59,6 +59,41 @@ public class GlobalExceptionHandler {
                 .body(ApiError.of(500, "Database error", "Unexpected database error"));
     }
 
+    @ExceptionHandler(com.sunra.showroom.auth.exception.AccountLockedException.class)
+    public ResponseEntity<ApiError> handleAccountLocked(com.sunra.showroom.auth.exception.AccountLockedException ex) {
+        return ResponseEntity.status(HttpStatus.LOCKED)
+                .body(ApiError.of(423, "Account locked", ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.sunra.showroom.auth.exception.AccountDeactivatedException.class)
+    public ResponseEntity<ApiError> handleAccountDeactivated(com.sunra.showroom.auth.exception.AccountDeactivatedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiError.of(403, "Account deactivated", ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.sunra.showroom.auth.exception.DuplicateUsernameException.class)
+    public ResponseEntity<ApiError> handleDuplicateUsername(com.sunra.showroom.auth.exception.DuplicateUsernameException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of(409, "Conflict", ex.getMessage()));
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiError.of(403, "Access denied", "You do not have permission to access this resource"));
+    }
+
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<ApiError> handleBadCredentials(org.springframework.security.authentication.BadCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiError.of(401, "Unauthorized", ex.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex) {
+        return ResponseEntity.badRequest().body(ApiError.of(400, "Bad request", ex.getMessage()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.badRequest().body(ApiError.of(400, "Bad request", ex.getMessage()));
