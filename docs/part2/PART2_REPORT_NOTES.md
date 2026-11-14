@@ -59,6 +59,12 @@ A critical business rule in the SUNRA Showroom Management System is: **"Only sto
 - **Payload**: Subject (`username`), `userId`, granted authority (`ROLE_<NAME>`), `iat` (issued at), and `exp` (expiration set to 8 hours).
 - **Stateless Session Management**: `SessionCreationPolicy.STATELESS` ensures the backend does not store HTTP session state in memory. Each incoming request is authenticated independently via the `Authorization: Bearer <token>` header, allowing seamless horizontal scaling and zero session affinity requirements.
 
+### 1.6 Stored Procedure Execution Security: DEFINER vs. INVOKER
+MySQL stored routines operate under one of two execution contexts specified by the `SQL SECURITY` characteristic:
+- **`SQL SECURITY DEFINER` (Default)**: The routine executes with the privileges of the account that created/defined it (the migration user `sunra_app` or `root`). When `app_sales` or `app_stock` is granted `EXECUTE` on the procedure, the caller can execute the encapsulated logic (such as adjusting inventory balances or recording stock movements) **without possessing direct table-level privileges** on `inventory`. This enables strict adherence to **Team Rule 4** (*"Only stored procedures change stock. Never UPDATE inventory directly"*).
+- **`SQL SECURITY INVOKER`**: The routine executes with the privileges of the user invoking it. Under `INVOKER`, calling accounts (`app_sales`, `app_stock`) would require direct `UPDATE` privileges on `inventory` and `INSERT` privileges on `stock_movement`; otherwise, calling the procedure fails with `ERROR 1142 (42000): UPDATE command denied`. Granting direct table privileges to callers would undermine least-privilege security and violate Rule 4.
+- **Guidance for Peer Module Owners (Parts 4, 5, 7)**: The authors of `sp_adjust_stock`, `sp_receive_purchase`, and `sp_create_sale` must either explicitly specify `SQL SECURITY DEFINER` or omit the clause (as `DEFINER` is the MySQL default). They must **never** specify `SQL SECURITY INVOKER`.
+
 ---
 
 ## 2. Account and Privilege Matrix

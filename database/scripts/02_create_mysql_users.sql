@@ -130,19 +130,27 @@ GRANT SELECT                 ON sunra_db.stock_movement   TO 'app_stock'@'%';
 --   - sp_create_sale        (Part 7 - Sales)
 --   - sp_generate_invoice   (Part 8 - Invoices)
 --
+-- SQL SECURITY NOTICE (DEFINER vs INVOKER):
+-- Peer procedures modifying inventory MUST use 'SQL SECURITY DEFINER' (the MySQL default).
+-- With DEFINER, the procedure executes under the definer's context (sunra_app), meaning
+-- the caller (app_sales or app_stock) only requires EXECUTE on the procedure itself.
+-- If the author erroneously specifies 'SQL SECURITY INVOKER', the procedure would execute
+-- under the caller's privileges, failing because app_sales/app_stock have NO direct UPDATE
+-- privilege on inventory (Rule 4).
+--
 -- Re-run this section as root once the respective R__ repeatable migrations
 -- have been merged into database/migration/.
 -- ---------------------------------------------------------------------
 
 -- UNCOMMENT AND EXECUTE AFTER PARTS 4, 6, 7, 8 ARE MERGED:
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_create_sale        TO 'app_sales'@'%';
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_generate_invoice   TO 'app_sales'@'%';
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_search_customer    TO 'app_sales'@'%';
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_adjust_stock       TO 'app_sales'@'%';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_create_sale        TO 'app_sales'@'%', 'app_admin'@'%';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_generate_invoice   TO 'app_sales'@'%', 'app_admin'@'%';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_search_customer    TO 'app_sales'@'%', 'app_admin'@'%';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_adjust_stock       TO 'app_sales'@'%', 'app_admin'@'%';
 
 -- UNCOMMENT AND EXECUTE AFTER PARTS 4, 5 ARE MERGED:
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_adjust_stock       TO 'app_stock'@'%';
--- GRANT EXECUTE ON PROCEDURE sunra_db.sp_receive_purchase   TO 'app_stock'@'%';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_adjust_stock       TO 'app_stock'@'%', 'app_admin'@'%';
+-- GRANT EXECUTE ON PROCEDURE sunra_db.sp_receive_purchase   TO 'app_stock'@'%', 'app_admin'@'%';
 
 -- ---------------------------------------------------------------------
 -- 6. Apply & Verify Privileges

@@ -75,7 +75,7 @@ UPDATE inventory SET quantity_on_hand = 999;
 
 -- ---------------------------------------------------------------------
 -- TEST 3B: Legitimate Stock Adjustment via Stored Procedure
--- ACCOUNTS: app_sales and app_stock
+-- ACCOUNTS: app_stock (and app_sales via sp_create_sale)
 -- COMMAND: CALL sp_adjust_stock(1, -1, 'SALE', 'SALE', 1, 'Point of sale deduction');
 -- EXPECTED:
 --   Query OK (Allowed once Part 4 R__04_inventory.sql is merged and EXECUTE granted)
@@ -84,11 +84,34 @@ UPDATE inventory SET quantity_on_hand = 999;
 --   logic encapsulated in sp_adjust_stock to guarantee stock_movement audit logging.
 -- ACTUAL: (paste here when executed against running MySQL)
 -- ---------------------------------------------------------------------
--- Run as app_sales:
--- CALL sp_adjust_stock(1, -1, 'SALE', 'SALE', 1, 'POS sale');
-
 -- Run as app_stock:
 -- CALL sp_adjust_stock(1, 10, 'PURCHASE', 'PURCHASE', 1, 'Inbound stock');
+
+
+-- ---------------------------------------------------------------------
+-- TEST 3C: Sales Procedure Execution (sp_create_sale)
+-- ACCOUNT: app_sales (password: CHANGE_ME_sales)
+-- RUN VIA WORKBENCH / DOCKER CLI as app_sales
+-- COMMAND: CALL sp_create_sale(1, '[{"productId":1,"quantity":1,"unitPrice":485000}]');
+-- EXPECTED:
+--   - Before Part 7 R__07_sales.sql merge: ERROR 1370 / ERROR 1305 (routine does not exist / denied)
+--   - After Part 7 merge & GRANT: Query OK (creates sale, deducts stock via DEFINER)
+-- ACTUAL: (paste here when executed against running MySQL)
+-- ---------------------------------------------------------------------
+-- CALL sp_create_sale(1, '[{"productId":1,"quantity":1,"unitPrice":485000}]');
+
+
+-- ---------------------------------------------------------------------
+-- TEST 3D: Purchase Receipt Procedure Execution (sp_receive_purchase)
+-- ACCOUNT: app_stock (password: CHANGE_ME_stock)
+-- RUN VIA WORKBENCH / DOCKER CLI as app_stock
+-- COMMAND: CALL sp_receive_purchase(1, 1, 5, 'Received showroom shipment');
+-- EXPECTED:
+--   - Before Part 5 R__05_purchase.sql merge: ERROR 1370 / ERROR 1305 (routine does not exist / denied)
+--   - After Part 5 merge & GRANT: Query OK (updates purchase item, increases stock via DEFINER)
+-- ACTUAL: (paste here when executed against running MySQL)
+-- ---------------------------------------------------------------------
+-- CALL sp_receive_purchase(1, 1, 5, 'Received showroom shipment');
 
 
 -- ---------------------------------------------------------------------
