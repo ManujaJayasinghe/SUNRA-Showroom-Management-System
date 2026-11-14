@@ -4,6 +4,7 @@ import PlaceholderPage from './components/PlaceholderPage'
 import SystemStatusPage from './modules/system/SystemStatusPage'
 import LoginPage from './modules/auth/LoginPage'
 import ChangePasswordPage from './modules/auth/ChangePasswordPage'
+import UserManagementPage from './modules/users/UserManagementPage'
 import ProtectedRoute from './modules/auth/ProtectedRoute'
 import { AuthProvider } from './modules/auth/AuthContext'
 
@@ -92,7 +93,7 @@ export default function App() {
             path="users"
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
-                <PlaceholderPage title="Users" part={2} todo={['User management (admin only)']} />
+                <UserManagementPage />
               </ProtectedRoute>
             }
           />
