@@ -105,8 +105,8 @@ Open http://localhost:5173 and go to **System Status**. It should show status UP
 | Username | Password | Role |
 |---|---|---|
 | admin | Admin@123 | ADMIN |
-| sales1 | Sales@123 | SALES_ASSISTANT |
-| stock1 | Stock@123 | STOCK_MANAGER |
+| sales1 | Sales@123 | SALES |
+| stock1 | Stock@123 | STOCK |
 
 Login works once Part 2 is done.
 

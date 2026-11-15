@@ -59,6 +59,12 @@ A critical business rule in the SUNRA Showroom Management System is: **"Only sto
 - **Payload**: Subject (`username`), `userId`, granted authority (`ROLE_<NAME>`), `iat` (issued at), and `exp` (expiration set to 8 hours).
 - **Stateless Session Management**: `SessionCreationPolicy.STATELESS` ensures the backend does not store HTTP session state in memory. Each incoming request is authenticated independently via the `Authorization: Bearer <token>` header, allowing seamless horizontal scaling and zero session affinity requirements.
 
+### 1.6 Stored Procedure Execution Security: DEFINER vs. INVOKER
+MySQL stored routines operate under one of two execution contexts specified by the `SQL SECURITY` characteristic:
+- **`SQL SECURITY DEFINER` (Default)**: The routine executes with the privileges of the account that created/defined it (the migration user `sunra_app` or `root`). When `app_sales` or `app_stock` is granted `EXECUTE` on the procedure, the caller can execute the encapsulated logic (such as adjusting inventory balances or recording stock movements) **without possessing direct table-level privileges** on `inventory`. This enables strict adherence to **Team Rule 4** (*"Only stored procedures change stock. Never UPDATE inventory directly"*).
+- **`SQL SECURITY INVOKER`**: The routine executes with the privileges of the user invoking it. Under `INVOKER`, calling accounts (`app_sales`, `app_stock`) would require direct `UPDATE` privileges on `inventory` and `INSERT` privileges on `stock_movement`; otherwise, calling the procedure fails with `ERROR 1142 (42000): UPDATE command denied`. Granting direct table privileges to callers would undermine least-privilege security and violate Rule 4.
+- **Guidance for Peer Module Owners (Parts 4, 5, 7)**: The authors of `sp_adjust_stock`, `sp_receive_purchase`, and `sp_create_sale` must either explicitly specify `SQL SECURITY DEFINER` or omit the clause (as `DEFINER` is the MySQL default). They must **never** specify `SQL SECURITY INVOKER`.
+
 ---
 
 ## 2. Account and Privilege Matrix
@@ -197,15 +203,15 @@ These tests correspond to the validation suite in `database/scripts/02_security_
 
 | Test ID | Test Name & Target | MySQL Account | Executed Command | Expected Result | Evidence Placeholder |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **SEC-01** | Wholesale Purchase Isolation | `app_sales` | `SELECT * FROM purchase;` | `ERROR 1142 (42000): SELECT command denied to user 'app_sales'@'localhost' for table 'purchase'` | `[screenshot here: sec01_purchase_denied.png]` |
-| **SEC-02** | Customer PII Protection | `app_stock` | `SELECT nic, phone FROM customer;` | `ERROR 1142 (42000): SELECT command denied to user 'app_stock'@'localhost' for table 'customer'` | `[screenshot here: sec02_customer_pii_denied.png]` |
-| **SEC-03A**| Direct Inventory UPDATE Denial | `app_sales` | `UPDATE inventory SET quantity_on_hand = 999;` | `ERROR 1142 (42000): UPDATE command denied to user 'app_sales'@'localhost' for table 'inventory'` | `[screenshot here: sec03a_sales_inventory_update_denied.png]` |
-| **SEC-03B**| Direct Inventory UPDATE Denial | `app_stock` | `UPDATE inventory SET quantity_on_hand = 999;` | `ERROR 1142 (42000): UPDATE command denied to user 'app_stock'@'localhost' for table 'inventory'` | `[screenshot here: sec03b_stock_inventory_update_denied.png]` |
-| **SEC-04** | Credential Table Protection | `app_sales` | `SELECT password_hash FROM app_user;` | `ERROR 1142 (42000): SELECT command denied to user 'app_sales'@'localhost' for table 'app_user'` | `[screenshot here: sec04_app_user_denied.png]` |
+| **SEC-01** | Wholesale Purchase Isolation | `app_sales` | `SELECT * FROM purchase;` | `ERROR 1142 (42000): SELECT command denied to user 'app_sales'@'%' for table 'purchase'` | `[screenshot here: sec01_purchase_denied.png]` |
+| **SEC-02** | Customer PII Protection | `app_stock` | `SELECT nic, phone FROM customer;` | `ERROR 1142 (42000): SELECT command denied to user 'app_stock'@'%' for table 'customer'` | `[screenshot here: sec02_customer_pii_denied.png]` |
+| **SEC-03A**| Direct Inventory UPDATE Denial | `app_sales` | `UPDATE inventory SET quantity_on_hand = 999;` | `ERROR 1142 (42000): UPDATE command denied to user 'app_sales'@'%' for table 'inventory'` | `[screenshot here: sec03a_sales_inventory_update_denied.png]` |
+| **SEC-03B**| Direct Inventory UPDATE Denial | `app_stock` | `UPDATE inventory SET quantity_on_hand = 999;` | `ERROR 1142 (42000): UPDATE command denied to user 'app_stock'@'%' for table 'inventory'` | `[screenshot here: sec03b_stock_inventory_update_denied.png]` |
+| **SEC-04** | Credential Table Protection | `app_sales` | `SELECT password_hash FROM app_user;` | `ERROR 1142 (42000): SELECT command denied to user 'app_sales'@'%' for table 'app_user'` | `[screenshot here: sec04_app_user_denied.png]` |
 | **SEC-05** | Public View Hash Concealment | `app_admin` | `SELECT * FROM v_user_public;` | Query succeeds; columns returned omit `password_hash`. | `[screenshot here: sec05_v_user_public_success.png]` |
-| **SEC-06** | Privilege Grant Audit | `root` | `SHOW GRANTS FOR 'app_sales'@'localhost';` | Displays only explicit least-privilege table grants. | `[screenshot here: sec06_show_grants_sales.png]` |
+| **SEC-06** | Privilege Grant Audit | `root` | `SHOW GRANTS FOR 'app_sales'@'%';` | Displays only explicit least-privilege table grants. | `[screenshot here: sec06_show_grants_sales.png]` |
 | **RVK-01** | Baseline Access Before Revocation | `app_sales` | `SELECT customer_id FROM customer LIMIT 1;` | Query OK (Customer records returned). | `[screenshot here: rvk01_baseline_allowed.png]` |
-| **RVK-02** | Privilege Revocation Test | `app_sales` | `REVOKE SELECT ...; SELECT * FROM customer;` | `ERROR 1142 (42000): SELECT command denied to user 'app_sales'@'localhost' for table 'customer'` | `[screenshot here: rvk02_revocation_denied.png]` |
+| **RVK-02** | Privilege Revocation Test | `app_sales` | `REVOKE SELECT ...; SELECT * FROM customer;` | `ERROR 1142 (42000): SELECT command denied to user 'app_sales'@'%' for table 'customer'` | `[screenshot here: rvk02_revocation_denied.png]` |
 | **RVK-03** | Privilege Restoration Test | `app_sales` | `GRANT SELECT ...; SELECT * FROM customer;` | Query OK (Access restored). | `[screenshot here: rvk03_restoration_allowed.png]` |
 
 ---
